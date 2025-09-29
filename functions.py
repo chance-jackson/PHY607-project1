@@ -1,18 +1,18 @@
 import numpy as np
 
 
-###################### ODE METHODS ################################################################
+###################### ODE METHODS ###############################################################
 
 
-def state(t, I, dot_I, R, L, C):
+def state(t, I, dot_I, alpha, omega_0):
     out1 = dot_I
-    out2 = (-R / L) * dot_I + (-1 / (L * C)) * I
+    out2 = -2 * alpha * dot_I - (omega_0**2) * I
 
     return np.array([out1, out2])
 
 
 def euler_explicit(
-    state, initial_I, initial_dot_I, start_time, end_time, N, R, L, C
+    initial_I, initial_dot_I, start_time, end_time, N, alpha, omega_0
 ):  # This function will take in some input ODE and evolve it according to the Euler Explicit rules
 
     delta_t = (end_time - start_time) / N
@@ -26,14 +26,16 @@ def euler_explicit(
     I[0] = initial_I
 
     for i in range(0, N - 1):
-        dot_I[i + 1] = dot_I[i] + delta_t * state(t[i], I[i], dot_I[i], R, L, C)[1]
-        I[i + 1] = I[i] + delta_t * state(t[i], I[i], dot_I[i], R, L, C)[0]
+        dot_I[i + 1] = (
+            dot_I[i] + delta_t * state(t[i], I[i], dot_I[i], alpha, omega_0)[1]
+        )
+        I[i + 1] = I[i] + delta_t * state(t[i], I[i], dot_I[i], alpha, omega_0)[0]
         t[i + 1] = t[i] + delta_t
 
     return (I, dot_I, t)
 
 
-def runge_kutta4(state, initial_I, initial_dot_I, start_time, end_time, N, R, L, C):
+def runge_kutta4(initial_I, initial_dot_I, start_time, end_time, N, alpha, omega_0):
 
     delta_t = (end_time - start_time) / N
 
@@ -46,37 +48,59 @@ def runge_kutta4(state, initial_I, initial_dot_I, start_time, end_time, N, R, L,
     I[0] = initial_I
 
     for i in range(0, N - 1):
-        k1f = delta_t * state(t[i], I[i], dot_I[i], R, L, C)[0]
-        k1g = delta_t * state(t[i], I[i], dot_I[i], R, L, C)[1]
+        k1f = delta_t * state(t[i], I[i], dot_I[i], alpha, omega_0)[0]
+        k1g = delta_t * state(t[i], I[i], dot_I[i], alpha, omega_0)[1]
 
         k2f = (
             delta_t
-            * state(t[i] + (delta_t / 2), I[i] + (k1f / 2), dot_I + (k1g / 2), R, L, C)[
-                0
-            ]
+            * state(
+                t[i] + (delta_t / 2),
+                I[i] + (k1f / 2),
+                dot_I[i] + (k1g / 2),
+                alpha,
+                omega_0,
+            )[0]
         )
         k2g = (
             delta_t
-            * state(t[i] + (delta_t / 2), I[i] + (k1f / 2), dot_I + (k1g / 2), R, L, C)[
-                1
-            ]
+            * state(
+                t[i] + (delta_t / 2),
+                I[i] + (k1f / 2),
+                dot_I[i] + (k1g / 2),
+                alpha,
+                omega_0,
+            )[1]
         )
 
         k3f = (
             delta_t
-            * state(t[i] + (delta_t / 2), I[i] + (k2f / 2), dot_I + (k2g / 2), R, L, C)[
-                0
-            ]
+            * state(
+                t[i] + (delta_t / 2),
+                I[i] + (k2f / 2),
+                dot_I[i] + (k2g / 2),
+                alpha,
+                omega_0,
+            )[0]
         )
         k3g = (
             delta_t
-            * state(t[i] + (delta_t / 2), I[i] + (k2f / 2), dot_I + (k2g / 2), R, L, C)[
-                1
-            ]
+            * state(
+                t[i] + (delta_t / 2),
+                I[i] + (k2f / 2),
+                dot_I[i] + (k2g / 2),
+                alpha,
+                omega_0,
+            )[1]
         )
 
-        k4f = delta_t * state(t[i] + delta_t, I[i] + k3f, dot_I + k3g, R, L, C)[0]
-        k4g = delta_t * state(t[i] + delta_t, I[i] + k3f, dot_I + k3g, R, L, C)[1]
+        k4f = (
+            delta_t
+            * state(t[i] + delta_t, I[i] + k3f, dot_I[i] + k3g, alpha, omega_0)[0]
+        )
+        k4g = (
+            delta_t
+            * state(t[i] + delta_t, I[i] + k3f, dot_I[i] + k3g, alpha, omega_0)[1]
+        )
 
         I[i + 1] = I[i] + (1 / 6) * (k1f + 2 * k2f + 2 * k3f + k4f)
         dot_I[i + 1] = dot_I[i] + (1 / 6) * (k1g + 2 * k2g + 2 * k3g + k4g)
@@ -104,7 +128,7 @@ def riemann(func, lower: float, upper: float, N: float):
     """
     dx = (upper - lower) / N  # step size
 
-    integral = 0
+    integral = 0  # initial integral value
 
     for k in range(1, N):
         integral += func(lower + k * dx)  # left hand riemann sum
@@ -112,10 +136,20 @@ def riemann(func, lower: float, upper: float, N: float):
     return dx * integral  # return integrated value
 
 
-def simpson(
-    func, lower: float, upper: float, N: int
-):  # This function takes in some integrand and its bounds and evaluates it using simpson's rule
+def simpson(func, lower: float, upper: float, N: int):
+    """
+    Compute the definite integral of some function using Simpson's Rule
 
+    Args:
+        func: function to integrate
+        lower: lower bound of integration
+        upper: upper bound of integration
+        N: number of steps
+
+    Returns:
+        integral: final integrated value
+
+    """
     dx = (upper - lower) / N  # determine step size
 
     integral = func(lower) + func(upper)  # evaluate at the end points
@@ -128,12 +162,23 @@ def simpson(
     for k in range(2, N, 2):  # loop over even terms
         integral += 2 * func(lower + k * dx)
 
-    return (dx / 3) * integral
+    return (dx / 3) * integral  # return integrated value (divided by 3)
 
 
-def trapezoidal(
-    func, lower: float, upper: float, N: int
-):  # This computes the integrand of some function using the trapezoidal rule
+def trapezoidal(func, lower: float, upper: float, N: int):
+    """
+    Compute the definite integral of some function using Trapezoidal Rule
+
+    Args:
+        func: function to integrate
+        lower: lower bound of integration
+        upper: upper bound of integration
+        N: number of steps
+
+    Returns:
+        integral: final integrated value
+
+    """
 
     dx = (upper - lower) / N  # step size
 
