@@ -99,7 +99,7 @@ for i in range(len(step_sizes)):
     rk4_error.append(np.mean(np.abs(analytic_sol - rk4_sol[0])))
     euler_error.append(np.mean(np.abs(analytic_sol - euler_sol[0])))
 
-
+fig = plt.figure(figsize=(8,6))
 plt.scatter(step_sizes, rk4_error, label='Runge-Kutta 4')
 plt.scatter(step_sizes, euler_error, label="Euler's Method")
 plt.legend(loc='best')
