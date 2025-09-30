@@ -30,7 +30,7 @@ for i in range(len(alpha)):
     rk4_scipy_list.append(solve_ivp(state_for_scipy, (0,end_time), (0,10),method = "RK45", vectorized = False,rtol = 1e-9))
     
 
-fig, axs = plt.subplots(figsize = (6,8), ncols = 3, sharey = True)
+fig, axs = plt.subplots(figsize = (12,8), ncols = 3, sharey = True,layout='tight')
 fig.suptitle(rf"Solutions for Different Values of Damping Constant")
 
 axs[0].set_title("Euler's Method")
