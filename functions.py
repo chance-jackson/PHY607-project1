@@ -26,9 +26,7 @@ def state(t, I, dot_I, alpha, omega_0):
     return np.array([out1, out2])
 
 
-def euler_explicit(
-    initial_I, initial_dot_I, start_time, end_time, N, alpha, omega_0
-):  
+def euler_explicit(initial_I, initial_dot_I, start_time, end_time, N, alpha, omega_0):
     """
     Estimate the solution to a differential equation using Euler's method (explicit).
 
@@ -44,28 +42,30 @@ def euler_explicit(
 
     """
 
-    delta_t = (end_time - start_time) / N   #determine time-step
+    delta_t = (end_time - start_time) / N  # determine time-step
 
-    t = np.empty(N)                         #initialize empty arrays for storing I,dot_I,t
+    t = np.empty(N)  # initialize empty arrays for storing I,dot_I,t
     dot_I = np.empty(N)
     I = np.empty(N)
 
-    t[0] = start_time                       #append initial values to arrays
+    t[0] = start_time  # append initial values to arrays
     dot_I[0] = initial_dot_I
     I[0] = initial_I
 
     for i in range(0, N - 1):
         dot_I[i + 1] = (
             dot_I[i] + delta_t * state(t[i], I[i], dot_I[i], alpha, omega_0)[1]
-        )                                                                          #iterate dot_I forward
-        I[i + 1] = I[i] + delta_t * state(t[i], I[i], dot_I[i], alpha, omega_0)[0] #iterate I forward
-        t[i + 1] = t[i] + delta_t                                                  #iterate time forward
+        )  # iterate dot_I forward
+        I[i + 1] = (
+            I[i] + delta_t * state(t[i], I[i], dot_I[i], alpha, omega_0)[0]
+        )  # iterate I forward
+        t[i + 1] = t[i] + delta_t  # iterate time forward
 
-    return (I, dot_I, t)                                                           #return tuple of arrays
+    return (I, dot_I, t)  # return tuple of arrays
 
 
 def runge_kutta4(initial_I, initial_dot_I, start_time, end_time, N, alpha, omega_0):
-      """
+    """
     Estimate the solution to a differential equation using Runge-Kutta 4.
 
     Args:
@@ -80,21 +80,23 @@ def runge_kutta4(initial_I, initial_dot_I, start_time, end_time, N, alpha, omega
 
     """
 
-    delta_t = (end_time - start_time) / N #determine time step
+    delta_t = (end_time - start_time) / N  # determine time step
 
-    t = np.empty(N)                       #initialize empty arrays
+    t = np.empty(N)  # initialize empty arrays
     dot_I = np.empty(N)
     I = np.empty(N)
 
-    t[0] = start_time                     #append initial values to arrays
+    t[0] = start_time  # append initial values to arrays
     dot_I[0] = initial_dot_I
     I[0] = initial_I
 
     for i in range(0, N - 1):
-        k1f = delta_t * state(t[i], I[i], dot_I[i], alpha, omega_0)[0] #first RK4 estimator step
+        k1f = (
+            delta_t * state(t[i], I[i], dot_I[i], alpha, omega_0)[0]
+        )  # first RK4 estimator step
         k1g = delta_t * state(t[i], I[i], dot_I[i], alpha, omega_0)[1]
 
-        k2f = (                                                         
+        k2f = (
             delta_t
             * state(
                 t[i] + (delta_t / 2),
@@ -103,7 +105,7 @@ def runge_kutta4(initial_I, initial_dot_I, start_time, end_time, N, alpha, omega
                 alpha,
                 omega_0,
             )[0]
-        )                                           #second RK4 estimator
+        )  # second RK4 estimator
         k2g = (
             delta_t
             * state(
@@ -124,7 +126,7 @@ def runge_kutta4(initial_I, initial_dot_I, start_time, end_time, N, alpha, omega
                 alpha,
                 omega_0,
             )[0]
-        )                                         #Third RK4 estimator
+        )  # Third RK4 estimator
         k3g = (
             delta_t
             * state(
@@ -139,17 +141,19 @@ def runge_kutta4(initial_I, initial_dot_I, start_time, end_time, N, alpha, omega
         k4f = (
             delta_t
             * state(t[i] + delta_t, I[i] + k3f, dot_I[i] + k3g, alpha, omega_0)[0]
-        )                                               #Fourth RK4 estimator
+        )  # Fourth RK4 estimator
         k4g = (
             delta_t
             * state(t[i] + delta_t, I[i] + k3f, dot_I[i] + k3g, alpha, omega_0)[1]
         )
 
-        I[i + 1] = I[i] + (1 / 6) * (k1f + 2 * k2f + 2 * k3f + k4f)   #weighted averages of 4 estimators, updated next value in array
+        I[i + 1] = I[i] + (1 / 6) * (
+            k1f + 2 * k2f + 2 * k3f + k4f
+        )  # weighted averages of 4 estimators, updated next value in array
         dot_I[i + 1] = dot_I[i] + (1 / 6) * (k1g + 2 * k2g + 2 * k3g + k4g)
         t[i + 1] = t[i] + delta_t
 
-    return (I, dot_I, t)   #return tuple of arrays
+    return (I, dot_I, t)  # return tuple of arrays
 
 
 ######################## INTEGRATION METHODS ###################################################
